@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+/* Additional Professional Styling */
+body {
+  font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 50%, #f0fff4 100%);
+  min-height: 100vh;
+}
+
+/* Professional Color Extensions */
+.text-primary { color: #2563eb; }
+.text-secondary { color: #059669; }
+.bg-primary { background-color: #2563eb; }
+.bg-secondary { background-color: #059669; }
+.border-primary { border-color: #2563eb; }
+.border-secondary { border-color: #059669; }
