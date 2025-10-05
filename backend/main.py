@@ -18,7 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
 from database import get_db, create_tables, VerificationRecord
 from models import VerificationRecordCreate
-from services_lightweight import LightweightDeepfakeDetectionService, LightweightBlockchainService
+from services import DeepfakeDetectionService, BlockchainService
 from schemas import VideoAnalysisRequest, VideoAnalysisResponse, VerificationResponse
 
 # Initialize FastAPI app
@@ -41,8 +41,8 @@ app.add_middleware(
 )
 
 # Initialize services
-deepfake_service = LightweightDeepfakeDetectionService()
-blockchain_service = LightweightBlockchainService()
+deepfake_service = DeepfakeDetectionService()
+blockchain_service = BlockchainService()
 
 @app.on_event("startup")
 async def startup_event():
