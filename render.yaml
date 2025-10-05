@@ -28,6 +28,6 @@ services:
       - key: PYTHON_VERSION
         value: "3.10.0"
 
-  - type: pserv
-    name: deepfake-db
+databases:
+  - name: deepfake-db
     plan: starter
