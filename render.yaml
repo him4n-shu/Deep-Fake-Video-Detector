@@ -30,4 +30,4 @@ services:
 
 databases:
   - name: deepfake-db
-    plan: starter
+    plan: free
