@@ -6,13 +6,31 @@ from datetime import datetime
 import pytz
 
 # Database configuration
-DATABASE_URL = "sqlite:///./election_deepfake.db"
+import os
+from urllib.parse import urlparse
 
-# Create SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Needed for SQLite
-)
+# Get database URL from environment variable (for production) or use SQLite (for development)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./election_deepfake.db")
+
+# Determine if we're using PostgreSQL or SQLite
+is_postgres = DATABASE_URL.startswith("postgresql://")
+
+# Create SQLAlchemy engine with appropriate configuration
+if is_postgres:
+    # PostgreSQL configuration
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True,
+        pool_recycle=300
+    )
+else:
+    # SQLite configuration (for development)
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 
 const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
   const [file, setFile] = useState(null);
@@ -56,7 +57,7 @@ const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
       if (candidateName) formData.append('candidate_name', candidateName);
       if (constituency) formData.append('constituency', constituency);
 
-      const response = await fetch('http://localhost:8000/analyze-video', {
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.ANALYZE_VIDEO), {
         method: 'POST',
         body: formData,
       });

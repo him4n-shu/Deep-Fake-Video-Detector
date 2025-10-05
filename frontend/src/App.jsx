@@ -7,6 +7,7 @@ import VerificationHistory from './components/VerificationHistory';
 import Statistics from './components/Statistics';
 import Dashboard from './components/Dashboard';
 import Footer from './components/Footer';
+import { buildApiUrl, API_ENDPOINTS } from './config/api';
 import './index.css';
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
 
   const fetchStatistics = async () => {
     try {
-      const response = await fetch('http://localhost:8000/statistics');
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.STATISTICS));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -44,7 +45,7 @@ function App() {
 
   const fetchVerificationHistory = async () => {
     try {
-      const response = await fetch('http://localhost:8000/verifications?limit=20');
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.VERIFICATIONS) + '?limit=20');
       const data = await response.json();
       setVerificationHistory(data);
     } catch (error) {
