@@ -31,5 +31,3 @@ services:
   - type: pserv
     name: deepfake-db
     plan: starter
-    databaseName: deepfake
-    user: deepfake_user
