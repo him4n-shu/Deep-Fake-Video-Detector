@@ -9,6 +9,9 @@ cryptography>=41.0.0
 pytz==2023.3
 gunicorn==21.2.0
 
+# Database drivers
+psycopg2-binary==2.9.9
+
 # Deep Learning dependencies for EfficientNet-B7 ensemble
 torch==2.0.1
 torchvision==0.15.2
