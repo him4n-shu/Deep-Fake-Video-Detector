@@ -390,3 +390,40 @@ Desktop.ini
 # Dataset folder is excluded (too large for git)
 # Model folder is tracked except for weights/
 # backend/temp_uploads/
+
+# AWS credentials (security)
+*.pem
+*.key
+aws-credentials.json
+
+# Model files with specific extensions
+final_*_DeepFakeClassifier_*
+*.bin
+*.safetensors
+
+# Training checkpoints
+checkpoints/
+*.ckpt
+*.checkpoint
+
+# Jupyter notebook outputs
+*.ipynb
+
+# Large model files that might be missed
+*.model
+*.weights
+*.tflite
+*.onnx
+
+# Temporary analysis files
+analysis/
+results/
+output/
+
+# Docker
+.dockerignore
+Dockerfile.local
+
+# Local development
+local/
+dev/

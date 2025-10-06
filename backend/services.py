@@ -1,6 +1,6 @@
 """
 Professional Deepfake Detection Service
-Integrates with the existing model architecture
+Integrates with EfficientNet-B7 ensemble models
 """
 import os
 import sys
@@ -14,34 +14,64 @@ from datetime import datetime
 import pytz
 from PIL import Image
 import io
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 # Add model directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
+# Import the model ensemble
+try:
+    # from model_loader import get_model_ensemble
+    from model_loader_s3 import get_model_ensemble
+    USE_EFFICIENTNET = True
+except ImportError as e:
+    print(f"⚠️  Could not import model_loader: {e}")
+    print("⚠️  Falling back to basic detection")
+    USE_EFFICIENTNET = False
+
+
 class DeepfakeDetectionService:
     """
-    Professional deepfake detection service using your model architecture
+    Professional deepfake detection service using EfficientNet-B7 ensemble
     """
     
     def __init__(self):
         self.model_loaded = False
-        self.model_path = os.getenv("MODEL_WEIGHTS_DIR", "./model/weights")
-        self.model = None
+        # Resolve the weights directory path
+        if os.getenv("MODEL_WEIGHTS_DIR"):
+            self.model_path = os.getenv("MODEL_WEIGHTS_DIR")
+        else:
+            # Default: go up from backend/ to project root, then to model/weights
+            backend_dir = os.path.dirname(os.path.abspath(__file__))
+            self.model_path = os.path.join(os.path.dirname(backend_dir), "model", "weights")
+        
+        self.ensemble = None
         self.load_model()
     
     def load_model(self):
-        """Load the deepfake detection model"""
+        """Load the EfficientNet-B7 ensemble models"""
         try:
-            # Check if model weights exist
-            if os.path.exists(self.model_path) and os.listdir(self.model_path):
-                print(f"✅ Model weights found: {self.model_path}")
-                self.model_loaded = True
-                print("🚀 Deepfake detection model ready")
-            else:
-                print("⚠️ Model weights not found, using fallback detection")
+            if not USE_EFFICIENTNET:
+                print("⚠️ EfficientNet models not available, using fallback detection")
                 self.model_loaded = False
+                return
+            
+            # Load the ensemble
+            print("🔄 Initializing EfficientNet-B7 ensemble...")
+            self.ensemble = get_model_ensemble(self.model_path)
+            
+            if self.ensemble and self.ensemble.models_loaded:
+                self.model_loaded = True
+                print("🚀 EfficientNet-B7 ensemble ready for detection")
+            else:
+                print("⚠️ Model ensemble not loaded, using fallback detection")
+                self.model_loaded = False
+                
         except Exception as e:
-            print(f"❌ Error loading model: {e}")
+            print(f"❌ Error loading model ensemble: {e}")
+            import traceback
+            traceback.print_exc()
             self.model_loaded = False
     
     async def analyze_video(self, video_path: str) -> Dict[str, Any]:
@@ -60,42 +90,53 @@ class DeepfakeDetectionService:
             return await self._fallback_detection(video_path)
     
     async def _model_detection(self, video_path: str) -> Dict[str, Any]:
-        """Use your actual model for detection"""
+        """Use EfficientNet-B7 ensemble for detection"""
         try:
-            # Extract frames from video
-            frames = await self._extract_frames(video_path, max_frames=10)
+            start_time = time.time()
             
-            if not frames:
-                return await self._fallback_detection(video_path)
+            # Run prediction using the ensemble in a thread pool to avoid blocking
+            print(f"🔍 Running EfficientNet-B7 ensemble on video...")
+            loop = asyncio.get_event_loop()
+            results = await loop.run_in_executor(
+                None,  # Use default executor
+                self.ensemble.analyze_video,
+                video_path
+            )
             
-            # Process frames through your model
-            # This is where you'd integrate with your actual model
-            # For now, using sophisticated computer vision analysis
+            processing_time = time.time() - start_time
             
-            detection_results = []
-            for frame in frames:
-                result = await self._analyze_frame_with_model(frame)
-                detection_results.append(result)
-            
-            # Calculate final result
-            avg_confidence = np.mean([r['confidence'] for r in detection_results])
-            is_deepfake = avg_confidence > 0.5
+            # Calculate model size (approximate for 7 models)
+            model_size_mb = 267 * 7  # Each model is ~267MB
+            model_size_str = f"{model_size_mb/1024:.1f} GB" if model_size_mb > 1000 else f"{model_size_mb} MB"
             
             return {
-                "is_deepfake": is_deepfake,
-                "confidence": float(avg_confidence),
-                "analysis_method": "model_detection",
-                "processing_time": 2.5,
-                "model_size": "< 1MB",
-                "faces_detected": len(frames),
-                "frames_analyzed": len(frames),
+                "is_deepfake": results.get("is_deepfake", False),
+                "confidence": float(results.get("confidence", 0.5)),
+                "analysis_method": "efficientnet_b7_ensemble",
+                "processing_time": round(processing_time, 2),
+                "model_size": model_size_str,
+                "faces_detected": results.get("faces_analyzed", 0),
+                "frames_analyzed": results.get("faces_analyzed", 0),
                 "model_loaded": True,
-                "detection_details": detection_results,
+                "models_in_ensemble": results.get("models_used", 7),
+                "model_agreement": {
+                    "min_confidence": results.get("min_prediction", 0.0),
+                    "max_confidence": results.get("max_prediction", 1.0),
+                    "std_deviation": results.get("std_prediction", 0.0),
+                    "individual_predictions": results.get("model_predictions", [])
+                },
+                "detection_details": {
+                    "face_predictions": results.get("all_face_predictions", []),
+                    "ensemble_method": "averaging",
+                    "threshold": 0.5
+                },
                 "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).isoformat()
             }
             
         except Exception as e:
             print(f"❌ Model detection error: {e}")
+            import traceback
+            traceback.print_exc()
             return await self._fallback_detection(video_path)
     
     async def _extract_frames(self, video_path: str, max_frames: int = 10) -> List[np.ndarray]:

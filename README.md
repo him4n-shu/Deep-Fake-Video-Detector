@@ -4,13 +4,14 @@ A comprehensive AI-powered system to detect and verify deepfake videos in Indian
 
 ## 🎯 Features
 
-- **🤖 AI-Powered Detection**: Advanced deep learning models for deepfake detection
+- **🤖 AI-Powered Detection**: EfficientNet-B7 ensemble (7 models) for robust deepfake detection
 - **🔒 Tamper-Proof Verification**: Blockchain-based verification hashes
 - **💾 Local Storage**: Secure local database for verification results
 - **🌐 User-Friendly Interface**: Modern React web interface
 - **⚡ Real-Time Analysis**: Fast video processing and analysis
 - **📊 Comprehensive Statistics**: Detailed analytics and reporting
 - **🏛️ Election Context**: Support for constituency and candidate tracking
+- **🎯 High Accuracy**: Ensemble approach with model agreement metrics
 
 ## 🏗️ System Architecture
 
@@ -73,44 +74,55 @@ The frontend will be available at `http://localhost:5173`
 ### 3. Model Setup
 
 ```bash
-# Ensure you're in the model directory with the conda environment activated
+# Download the EfficientNet-B7 model weights (if not already downloaded)
 cd model
+bash download_weights.sh
 
-# The AI models should be placed in the weights/ directory
-# For now, the system uses mock detection for demonstration
+# Verify models are loaded correctly
+cd ../backend
+python test_model_integration.py
 ```
+
+**Note**: The 7 EfficientNet-B7 models (~1.87 GB total) will be downloaded automatically. Ensure you have sufficient disk space and a stable internet connection.
 
 ## 📁 Project Structure
 
 ```
 deepfake_video_dector_dev/
-├── backend/                 # FastAPI backend
-│   ├── main.py             # Main API server
-│   ├── database.py         # Database models and connection
-│   ├── models.py           # Pydantic models
-│   ├── schemas.py          # API schemas
-│   ├── services.py         # Business logic services
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # React frontend
+├── backend/                    # FastAPI backend
+│   ├── main.py                # Main API server
+│   ├── database.py            # Database models and connection
+│   ├── models.py              # Pydantic models
+│   ├── schemas.py             # API schemas
+│   ├── services.py            # Business logic services
+│   ├── model_loader.py        # EfficientNet-B7 ensemble loader
+│   ├── test_model_integration.py  # Integration tests
+│   └── requirements.txt       # Python dependencies
+├── frontend/                  # React frontend
 │   ├── src/
-│   │   ├── components/     # React components
+│   │   ├── components/        # React components
 │   │   │   ├── Header.jsx
 │   │   │   ├── VideoUpload.jsx
 │   │   │   ├── AnalysisResults.jsx
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── VerificationHistory.jsx
 │   │   │   └── Statistics.jsx
-│   │   └── App.jsx         # Main app component
-│   └── package.json        # Node.js dependencies
-├── model/                  # AI model core
-│   ├── training/           # Model training code
-│   ├── preprocessing/      # Data preprocessing
-│   ├── weights/            # Trained model weights
-│   ├── kernel_utils.py     # Video processing utilities
-│   └── predict_folder.py   # Prediction script
-└── dataset/                # Sample videos for testing
-    ├── test_videos/        # Test video files
-    └── train_videos/       # Training video files
+│   │   └── App.jsx            # Main app component
+│   └── package.json           # Node.js dependencies
+├── model/                     # AI model core
+│   ├── training/              # Model training code
+│   │   └── zoo/
+│   │       └── classifiers.py # EfficientNet-B7 architecture
+│   ├── preprocessing/         # Data preprocessing
+│   ├── weights/               # Trained model weights (7 models, 1.87GB)
+│   ├── configs/               # Model configurations
+│   ├── kernel_utils.py        # Video processing utilities
+│   ├── predict_folder.py      # Batch prediction script
+│   ├── download_weights.sh    # Weight download script
+│   └── MODEL_INTEGRATION.md   # Detailed model documentation
+└── dataset/                   # Sample videos for testing
+    ├── test_videos/           # Test video files
+    └── train_videos/          # Training video files
 ```
 
 ## 🔧 API Endpoints
@@ -180,10 +192,45 @@ curl "http://localhost:8000/statistics"
 ## 🤖 AI Model Details
 
 ### Current Implementation
-- **Architecture**: EfficientNet-B7 based classifier
-- **Input**: 380x380 pixel face crops
-- **Processing**: 32 frames per video
-- **Output**: Binary classification with confidence score
+- **Architecture**: EfficientNet-B7 ensemble (7 models)
+- **Model Source**: DFDC (Deepfake Detection Challenge) winning solution
+- **Input Size**: 380x380 pixel face crops
+- **Processing**: Up to 32 frames per video with face detection
+- **Ensemble Method**: Average of 7 model predictions
+- **Output**: Binary classification with confidence score and model agreement metrics
+
+### Model Files
+The system uses 7 EfficientNet-B7 models:
+1. `final_111_DeepFakeClassifier_tf_efficientnet_b7_ns_0_36`
+2. `final_555_DeepFakeClassifier_tf_efficientnet_b7_ns_0_19`
+3. `final_777_DeepFakeClassifier_tf_efficientnet_b7_ns_0_29`
+4. `final_777_DeepFakeClassifier_tf_efficientnet_b7_ns_0_31`
+5. `final_888_DeepFakeClassifier_tf_efficientnet_b7_ns_0_37`
+6. `final_888_DeepFakeClassifier_tf_efficientnet_b7_ns_0_40`
+7. `final_999_DeepFakeClassifier_tf_efficientnet_b7_ns_0_23`
+
+**Total Size**: ~1.87 GB (267 MB per model)
+
+### Model Pipeline
+```
+Video → Frame Extraction → Face Detection → Preprocessing → 
+EfficientNet-B7 Ensemble (7 models) → Averaging → Final Prediction
+```
+
+### Performance
+- **CPU Inference**: 30-60 seconds per video
+- **GPU Inference**: 5-15 seconds per video (with CUDA)
+- **Accuracy**: Ensemble approach provides robust predictions
+- **Model Agreement**: Standard deviation metric shows consensus
+
+### Testing the Models
+```bash
+cd backend
+python test_model_integration.py
+```
+
+### Detailed Documentation
+See [MODEL_INTEGRATION.md](model/MODEL_INTEGRATION.md) for complete technical documentation.
 
 ### Model Training
 ```bash
@@ -191,11 +238,6 @@ curl "http://localhost:8000/statistics"
 cd model
 bash train.sh /path/to/data 1  # 1 GPU
 ```
-
-### Adding New Models
-1. Place trained model weights in `model/weights/`
-2. Update model loading in `backend/services.py`
-3. Restart the backend server
 
 ## 📊 Database Schema
 
