@@ -4,7 +4,7 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for OpenCV and ML libraries
+# Install minimal system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -13,11 +13,9 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
-    libglib2.0-dev \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
-    libatlas-base-dev \
     python3-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
