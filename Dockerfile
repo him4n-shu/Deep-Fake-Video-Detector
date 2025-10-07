@@ -33,5 +33,5 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory to backend
 WORKDIR /app/backend
 
-# Start the application
-CMD gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
+# Start the application directly
+CMD ["python", "-m", "gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8000"]
