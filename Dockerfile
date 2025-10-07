@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10
 
 # Set working directory
 WORKDIR /app
@@ -30,8 +30,9 @@ COPY . /app/
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory to backend
-WORKDIR /app/backend
+# Expose port
+EXPOSE 8000
 
-# Start the application directly
-CMD ["python", "-m", "gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8000"]
+# Change to backend directory and start the application
+WORKDIR /app/backend
+CMD ["python", "-m", "gunicorn", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8000", "--timeout", "300", "--keep-alive", "2"]
