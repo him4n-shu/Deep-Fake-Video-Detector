@@ -35,4 +35,4 @@ EXPOSE 8000
 
 # Change to backend directory and start the application
 WORKDIR /app/backend
-CMD ["python", "-m", "gunicorn", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:${PORT:-8000}", "--timeout", "300", "--keep-alive", "2"]
+CMD ["python", "main.py"]
