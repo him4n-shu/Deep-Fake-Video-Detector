@@ -334,10 +334,11 @@ async def clear_all_data(db: Session = Depends(get_db)):
     return {"message": f"Cleared {count} verification records"}
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
+        port=port,
+        reload=False,  # Disable reload in production
         log_level="info"
     )
