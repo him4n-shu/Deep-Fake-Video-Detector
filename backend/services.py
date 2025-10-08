@@ -22,8 +22,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
 # Import the model ensemble
 try:
-    from model_loader import get_model_ensemble
-    # from model_loader_s3 import get_model_ensemble
+    # from model_loader import get_model_ensemble
+    from model_loader_s3 import get_model_ensemble
     USE_EFFICIENTNET = True
 except ImportError as e:
     print(f"⚠️  Could not import model_loader: {e}")
