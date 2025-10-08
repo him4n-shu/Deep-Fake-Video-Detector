@@ -10,7 +10,7 @@ import os
 from urllib.parse import urlparse
 
 # Get database URL from environment variable (for production) or use SQLite (for development)
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./election_deepfake.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./veritas_ai.db")
 
 # Determine if we're using PostgreSQL or SQLite
 is_postgres = DATABASE_URL.startswith("postgresql://")

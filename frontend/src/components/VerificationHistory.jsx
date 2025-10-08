@@ -1,254 +1,303 @@
 import React, { useState, useEffect } from 'react';
+import { Search, Filter, Download, Copy, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { toast } from 'sonner';
+import AnimatedBackground from './AnimatedBackground';
 
 const VerificationHistory = ({ verifications, onRefresh }) => {
   const [filteredVerifications, setFilteredVerifications] = useState(verifications);
-  const [filters, setFilters] = useState({
-    constituency: '',
-    candidate: '',
-    result: 'all'
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     setFilteredVerifications(verifications);
   }, [verifications]);
 
-  const handleFilterChange = (filterType, value) => {
-    const newFilters = { ...filters, [filterType]: value };
-    setFilters(newFilters);
-
+  // Filter and search logic
+  useEffect(() => {
     let filtered = verifications;
 
-    if (newFilters.constituency) {
+    // Search by filename
+    if (searchTerm) {
       filtered = filtered.filter(v => 
-        v.constituency && v.constituency.toLowerCase().includes(newFilters.constituency.toLowerCase())
+        v.filename && v.filename.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    if (newFilters.candidate) {
+    // Filter by status
+    if (statusFilter !== 'all') {
       filtered = filtered.filter(v => 
-        v.candidate_name && v.candidate_name.toLowerCase().includes(newFilters.candidate.toLowerCase())
-      );
-    }
-
-    if (newFilters.result !== 'all') {
-      filtered = filtered.filter(v => 
-        newFilters.result === 'deepfake' ? v.is_deepfake : !v.is_deepfake
+        statusFilter === 'deepfake' ? v.is_deepfake : !v.is_deepfake
       );
     }
 
     setFilteredVerifications(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [verifications, searchTerm, statusFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredVerifications.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentVerifications = filteredVerifications.slice(startIndex, endIndex);
+
+  const handleCopyHash = (hash) => {
+    navigator.clipboard.writeText(hash);
+    // You could add a toast notification here
   };
 
-  const VerificationCard = ({ verification }) => (
-    <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-800 mb-1">{verification.filename}</h3>
-          <p className="text-sm text-gray-600">
-            Analysis ID: <span className="font-mono text-xs">{verification.analysis_id}</span>
-          </p>
-        </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-          verification.is_deepfake 
-            ? 'bg-red-100 text-red-800' 
-            : 'bg-green-100 text-green-800'
-        }`}>
-          {verification.is_deepfake ? 'Deepfake' : 'Authentic'}
-        </span>
-      </div>
+  const handleExportCSV = () => {
+    try {
+      // Check if there's data to export
+      if (filteredVerifications.length === 0) {
+        toast.error('No data to export. Please check your filters.');
+        return;
+      }
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">Confidence:</span> {(verification.confidence_score * 100).toFixed(1)}%
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">Timestamp:</span> {new Date(verification.timestamp).toLocaleString()}
-          </p>
-        </div>
-        <div>
-          {verification.constituency && (
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Constituency:</span> {verification.constituency}
-            </p>
-          )}
-          {verification.candidate_name && (
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Candidate:</span> {verification.candidate_name}
-            </p>
-          )}
-        </div>
-      </div>
+      // Prepare CSV data
+      const csvHeaders = ['Filename', 'Status', 'Confidence (%)', 'Date/Time', 'Hash', 'Constituency', 'Candidate'];
+      
+      const csvData = filteredVerifications.map(verification => [
+        verification.filename || '',
+        verification.is_deepfake ? 'DEEPFAKE' : 'AUTHENTIC',
+        (verification.confidence_score * 100).toFixed(1),
+        new Date(verification.timestamp).toLocaleString(),
+        verification.verification_hash || '',
+        verification.constituency || '',
+        verification.candidate_name || ''
+      ]);
 
-      <div className="bg-gray-50 rounded-lg p-3">
-        <p className="text-xs text-gray-500 mb-1">Verification Hash:</p>
-        <p className="font-mono text-xs text-gray-700 break-all">
-          {verification.verification_hash}
-        </p>
-      </div>
+      // Combine headers and data
+      const csvContent = [csvHeaders, ...csvData]
+        .map(row => row.map(field => `"${field}"`).join(','))
+        .join('\n');
 
-      {verification.is_tampered && (
-        <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
-          <div className="flex items-center">
-            <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <span className="text-sm text-red-800 font-medium">Tampering Detected</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        
+        // Generate filename with current date
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const filename = `verification_history_${dateStr}_${timeStr}.csv`;
+        link.setAttribute('download', filename);
+        
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
+        
+        // Show success message
+        toast.success(`CSV exported successfully! ${filteredVerifications.length} records downloaded as ${filename}`);
+      } else {
+        toast.error('CSV download not supported in this browser.');
+      }
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      toast.error('Failed to export CSV. Please try again.');
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-8">
+    <div className="min-h-screen pt-32 pb-12 px-4 relative">
+      <AnimatedBackground />
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Verification History
-            </h2>
-            <p className="text-gray-600">
-              View all video analysis results and verification records
-            </p>
-          </div>
-          <button
-            onClick={onRefresh}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh
-          </button>
+        <div className="text-center mb-8 animate-slide-up">
+          <h1 className="font-orbitron text-4xl md:text-5xl font-bold mb-4">
+            <span className="gradient-text-cyan">VERIFICATION HISTORY</span>
+          </h1>
+          <p className="text-[hsl(var(--text-secondary))] text-lg">
+            Total Verifications: {filteredVerifications.length}
+          </p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-gray-50 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Filters</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Constituency
-              </label>
+        {/* Search and Filter Bar */}
+        <div className="glass-card p-6 mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[hsl(var(--text-secondary))]" />
               <input
                 type="text"
-                value={filters.constituency}
-                onChange={(e) => handleFilterChange('constituency', e.target.value)}
-                placeholder="Filter by constituency..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search by filename..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input-cyber w-full pl-10"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Candidate Name
-              </label>
-              <input
-                type="text"
-                value={filters.candidate}
-                onChange={(e) => handleFilterChange('candidate', e.target.value)}
-                placeholder="Filter by candidate..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Result
-              </label>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-cyber-cyan" />
               <select
-                value={filters.result}
-                onChange={(e) => handleFilterChange('result', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="input-cyber min-w-[120px]"
               >
-                <option value="all">All Results</option>
-                <option value="deepfake">Deepfakes Only</option>
-                <option value="authentic">Authentic Only</option>
+                <option value="all">All Status</option>
+                <option value="authentic">Authentic</option>
+                <option value="deepfake">Deepfake</option>
               </select>
             </div>
+
+            {/* Export Button */}
+            <button 
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2 border border-cyber-cyan text-cyber-cyan rounded-lg hover:bg-cyber-cyan/10 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
           </div>
         </div>
 
-        {/* Results Summary */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-gray-600">
-            Showing {filteredVerifications.length} of {verifications.length} verifications
-          </p>
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <span>Deepfakes ({verifications.filter(v => v.is_deepfake).length})</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span>Authentic ({verifications.filter(v => !v.is_deepfake).length})</span>
-            </div>
+        {/* Table */}
+        <div className="glass-card overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-[hsl(var(--bg-secondary))]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-orbitron font-bold text-cyber-cyan uppercase tracking-wider">
+                    Filename
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-orbitron font-bold text-cyber-cyan uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-orbitron font-bold text-cyber-cyan uppercase tracking-wider">
+                    Confidence
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-orbitron font-bold text-cyber-cyan uppercase tracking-wider">
+                    Date/Time
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-orbitron font-bold text-cyber-cyan uppercase tracking-wider">
+                    Hash
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[hsl(var(--border-glow))]">
+                {currentVerifications.map((verification, index) => (
+                  <tr key={verification.id || index} className="hover:bg-[hsl(var(--bg-secondary))]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-white">
+                        {verification.filename}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
+                        verification.is_deepfake 
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                          : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      }`}>
+                        {verification.is_deepfake ? 'DEEPFAKE' : 'AUTHENTIC'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-20 bg-[hsl(var(--bg-secondary))] rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              verification.is_deepfake ? 'bg-red-500' : 'bg-green-500'
+                            }`}
+                            style={{ width: `${verification.confidence_score * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className={`text-sm font-bold ${
+                          verification.is_deepfake ? 'text-red-400' : 'text-green-400'
+                        }`}>
+                          {(verification.confidence_score * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))]">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(verification.timestamp).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-[hsl(var(--text-secondary))]">
+                          {verification.verification_hash ? verification.verification_hash.substring(0, 8) + '...' : 'N/A'}
+                        </span>
+                        <button
+                          onClick={() => handleCopyHash(verification.verification_hash)}
+                          className="text-cyber-cyan hover:text-cyber-cyan-light transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Verification Cards */}
-        {filteredVerifications.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredVerifications.map((verification, index) => (
-              <VerificationCard key={index} verification={verification} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-800 mb-2">No verifications found</h3>
-            <p className="text-gray-600">
-              {verifications.length === 0 
-                ? "No videos have been analyzed yet. Upload a video to get started."
-                : "No verifications match your current filters. Try adjusting your search criteria."
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-3 py-2 text-sm text-[hsl(var(--text-secondary))] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
               }
-            </p>
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                    currentPage === pageNum
+                      ? 'bg-cyber-cyan text-[hsl(var(--bg-primary))] border border-cyber-cyan'
+                      : 'text-[hsl(var(--text-secondary))] hover:text-white hover:bg-[hsl(var(--bg-secondary))]'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-3 py-2 text-sm text-[hsl(var(--text-secondary))] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         )}
 
-        {/* Export Options */}
-        {filteredVerifications.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Export Data</h3>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => {
-                  const csv = [
-                    ['Filename', 'Analysis ID', 'Result', 'Confidence', 'Constituency', 'Candidate', 'Timestamp'],
-                    ...filteredVerifications.map(v => [
-                      v.filename,
-                      v.analysis_id,
-                      v.is_deepfake ? 'Deepfake' : 'Authentic',
-                      (v.confidence_score * 100).toFixed(1) + '%',
-                      v.constituency || '',
-                      v.candidate_name || '',
-                      new Date(v.timestamp).toLocaleString()
-                    ])
-                  ].map(row => row.join(',')).join('\n');
-                  
-                  const blob = new Blob([csv], { type: 'text/csv' });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'verification_history.csv';
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                }}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Export as CSV
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Print Report
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Pagination Info */}
+        <div className="text-center mt-4 text-sm text-[hsl(var(--text-secondary))]">
+          Showing {startIndex + 1} to {Math.min(endIndex, filteredVerifications.length)} of {filteredVerifications.length} verifications
+        </div>
       </div>
     </div>
   );

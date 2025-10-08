@@ -22,8 +22,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
 # Import the model ensemble
 try:
-    # from model_loader import get_model_ensemble
-    from model_loader_s3 import get_model_ensemble
+    from model_loader import get_model_ensemble
+    # from model_loader_s3 import get_model_ensemble
     USE_EFFICIENTNET = True
 except ImportError as e:
     print(f"⚠️  Could not import model_loader: {e}")
@@ -105,15 +105,24 @@ class DeepfakeDetectionService:
             
             processing_time = time.time() - start_time
             
+            # Debug: Check if model returned processing_time
+            model_processing_time = results.get("processing_time")
+            print(f"🔍 Model processing_time: {model_processing_time}")
+            print(f"🔍 Service processing_time: {round(processing_time, 2)}")
+            
             # Calculate model size (approximate for 7 models)
             model_size_mb = 267 * 7  # Each model is ~267MB
             model_size_str = f"{model_size_mb/1024:.1f} GB" if model_size_mb > 1000 else f"{model_size_mb} MB"
+            
+            # Use model's processing_time if available, otherwise use service timing
+            final_processing_time = model_processing_time if model_processing_time is not None else round(processing_time, 2)
+            print(f"🔍 Final processing_time: {final_processing_time}")
             
             return {
                 "is_deepfake": results.get("is_deepfake", False),
                 "confidence": float(results.get("confidence", 0.5)),
                 "analysis_method": "efficientnet_b7_ensemble",
-                "processing_time": round(processing_time, 2),
+                "processing_time": final_processing_time,
                 "model_size": model_size_str,
                 "faces_detected": results.get("faces_analyzed", 0),
                 "frames_analyzed": results.get("faces_analyzed", 0),
@@ -127,8 +136,23 @@ class DeepfakeDetectionService:
                 },
                 "detection_details": {
                     "face_predictions": results.get("all_face_predictions", []),
-                    "ensemble_method": "averaging",
-                    "threshold": 0.5
+                    "ensemble_method": "weighted_averaging",
+                    "threshold": 0.5,
+                    "ensemble_weights": results.get("ensemble_weights", []),
+                    "temporal_consistency": results.get("temporal_consistency", {}),
+                    "face_quality": results.get("face_quality", {})
+                },
+                "quality_metrics": {
+                    "face_quality_score": results.get("face_quality", {}).get("quality_score", 0.5),
+                    "temporal_consistency_score": results.get("temporal_consistency", {}).get("consistency_score", 0.5),
+                    "quality_issues": results.get("face_quality", {}).get("issues", []),
+                    "prediction_trend": results.get("temporal_consistency", {}).get("trend", "stable")
+                },
+                "decision_analysis": {
+                    "decision_factors": results.get("decision_factors", {}),
+                    "adaptive_threshold": results.get("decision_factors", {}).get("final_threshold", 0.5),
+                    "model_agreement": results.get("decision_factors", {}).get("model_agreement", 0.5),
+                    "confidence_boost": results.get("decision_factors", {}).get("confidence_boost", 0.0)
                 },
                 "timestamp": datetime.now(pytz.timezone('Asia/Kolkata')).isoformat()
             }
@@ -334,6 +358,7 @@ class DeepfakeDetectionService:
     
     async def _fallback_detection(self, video_path: str) -> Dict[str, Any]:
         """Fallback detection when model is not available"""
+        start_time = time.time()
         try:
             # Get video properties
             cap = cv2.VideoCapture(video_path)
@@ -345,27 +370,45 @@ class DeepfakeDetectionService:
             # Analyze file characteristics
             file_size = os.path.getsize(video_path)
             
-            # Simple heuristics based on video properties
-            if duration < 1.0:  # Very short videos
-                is_deepfake = False
-                confidence = 0.3
-            elif file_size < 500000:  # Small file size
-                is_deepfake = True
-                confidence = 0.7
-            else:
-                # Use duration and size for educated guess
-                if duration > 10 and file_size > 2000000:
-                    is_deepfake = False
-                    confidence = 0.4
-                else:
-                    is_deepfake = True
-                    confidence = 0.6
+            # IMPROVED heuristics - more neutral approach
+            # Use a more balanced approach that doesn't make strong assumptions
+            
+            # Calculate a score based on multiple factors
+            score = 0.5  # Start neutral
+            
+            # Factor 1: Duration (longer videos are more likely to be authentic)
+            if duration > 30:  # Very long videos
+                score += 0.1
+            elif duration < 2:  # Very short videos
+                score -= 0.1
+            
+            # Factor 2: File size (larger files are more likely to be authentic)
+            if file_size > 5000000:  # Large files (>5MB)
+                score += 0.1
+            elif file_size < 100000:  # Very small files (<100KB)
+                score -= 0.1
+            
+            # Factor 3: Frame rate (normal frame rates suggest authenticity)
+            if 20 <= fps <= 60:  # Normal frame rates
+                score += 0.05
+            elif fps < 10 or fps > 120:  # Unusual frame rates
+                score -= 0.05
+            
+            # Clamp score between 0.1 and 0.9
+            score = max(0.1, min(0.9, score))
+            
+            # Make decision based on score
+            is_deepfake = score < 0.5
+            confidence = abs(score - 0.5) * 2  # Convert to confidence (0.0 to 0.8)
+            confidence = max(0.3, min(0.8, confidence))  # Clamp confidence
+            
+            processing_time = round(time.time() - start_time, 2)
             
             return {
                 "is_deepfake": is_deepfake,
                 "confidence": confidence,
                 "analysis_method": "fallback_detection",
-                "processing_time": 0.5,
+                "processing_time": processing_time,
                 "model_size": "< 1MB",
                 "faces_detected": 0,
                 "frames_analyzed": 0,

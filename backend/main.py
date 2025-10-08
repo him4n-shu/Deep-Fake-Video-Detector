@@ -23,8 +23,8 @@ from schemas import VideoAnalysisRequest, VideoAnalysisResponse, VerificationRes
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Indian Election Deepfake Detection System",
-    description="AI-powered system to detect and verify deepfake videos in Indian election campaigns",
+    title="Veritas AI - Deepfake Detection System",
+    description="Veritas AI: Seeing Through the Illusion. Advanced AI-powered system to detect and verify deepfake videos in electoral content.",
     version="1.0.0"
 )
 
@@ -48,7 +48,8 @@ blockchain_service = BlockchainService()
 async def startup_event():
     """Initialize database and services on startup"""
     create_tables()
-    print("🚀 Indian Election Deepfake Detection System started!")
+    print("🚀 Veritas AI - Deepfake Detection System started!")
+    print("🎯 Seeing Through the Illusion")
     print("📊 Database initialized")
     print("🔗 Blockchain service ready")
 
@@ -56,7 +57,7 @@ async def startup_event():
 async def root():
     """Root endpoint with system information"""
     return {
-        "message": "Indian Election Deepfake Detection System",
+        "message": "Veritas AI Deepfake Detection System",
         "version": "1.0.0",
         "status": "active",
         "features": [
@@ -279,18 +280,19 @@ async def create_sample_data(db: Session = Depends(get_db)):
     import random
     from datetime import datetime, timedelta
     
-    # Sample data for Indian elections
+    # Sample data for testing
     constituencies = ["Varanasi", "Amethi", "Gandhinagar", "Mumbai North", "Delhi", "Chennai South", "Kolkata North"]
     candidates = ["Narendra Modi", "Rahul Gandhi", "Arvind Kejriwal", "Mamata Banerjee", "Yogi Adityanath"]
     
     sample_records = []
     for i in range(15):  # Create 15 sample records
         is_deepfake = random.choice([True, False, False, False])  # 25% deepfake rate
-        confidence = random.uniform(0.6, 0.95) if is_deepfake else random.uniform(0.1, 0.4)
+        # More realistic confidence scores: high confidence for both deepfake and authentic
+        confidence = random.uniform(0.75, 0.95) if is_deepfake else random.uniform(0.75, 0.95)
         
         record = VerificationRecord(
             analysis_id=f"sample_{i+1:03d}",
-            filename=f"election_video_{i+1:03d}.mp4",
+            filename=f"sample_video_{i+1:03d}.mp4",
             file_hash=hashlib.sha256(f"sample_file_{i}".encode()).hexdigest(),
             verification_hash=blockchain_service.create_verification_hash(
                 analysis_id=f"sample_{i+1:03d}",
@@ -300,7 +302,7 @@ async def create_sample_data(db: Session = Depends(get_db)):
             ),
             is_deepfake=is_deepfake,
             confidence_score=confidence,
-            election_context="2024 General Elections",
+            election_context="Sample Context",
             candidate_name=random.choice(candidates),
             constituency=random.choice(constituencies),
             analysis_details={

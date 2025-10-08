@@ -1,29 +1,28 @@
 import React from 'react';
+import { Shield, Zap, Database, TrendingUp } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-white mt-16">
-      <div className="container mx-auto px-4 py-8">
+    <footer className="glass-card border-t border-[hsl(var(--border-glow))] mt-16">
+      <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="md:col-span-2">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-gradient-to-br from-blue-600 to-green-600 text-white p-3 rounded-lg shadow-lg">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="relative">
+                <Shield className="w-8 h-8 text-cyber-cyan" />
+                <div className="absolute inset-0 bg-cyber-cyan blur-xl opacity-30" />
               </div>
               <div>
-                <h3 className="text-xl font-bold">
-                  <span className="text-blue-400">Deepfake</span>
-                  <span className="text-green-400 ml-1">Detector</span>
+                <h3 className="font-orbitron text-xl font-bold gradient-text-cyan">
+                  Veritas AI
                 </h3>
-                <p className="text-sm text-gray-400">
-                  Advanced AI Detection System
+                <p className="text-[hsl(var(--text-secondary))] text-sm font-space">
+                  Seeing Through the Illusion
                 </p>
               </div>
             </div>
-            <p className="text-gray-300 text-sm max-w-md">
+            <p className="text-[hsl(var(--text-secondary))] text-sm max-w-md leading-relaxed">
               Professional deepfake detection service powered by cutting-edge AI technology. 
               Secure, fast, and accurate video analysis for content verification.
             </p>
@@ -31,60 +30,96 @@ const Footer = () => {
 
           {/* Services Section */}
           <div>
-            <h4 className="font-semibold text-gray-200 mb-4">Services</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li>• Video Analysis</li>
-              <li>• Deepfake Detection</li>
-              <li>• History Tracking</li>
-              <li>• Analytics Dashboard</li>
-              <li>• Tamper-proof Verification</li>
+            <h4 className="font-orbitron font-bold text-cyber-cyan mb-4">SERVICES</h4>
+            <ul className="space-y-3 text-sm text-[hsl(var(--text-secondary))]">
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-cyan rounded-full"></span>
+                Video Analysis
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-cyan rounded-full"></span>
+                Deepfake Detection
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-cyan rounded-full"></span>
+                History Tracking
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-cyan rounded-full"></span>
+                Analytics Dashboard
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-cyan rounded-full"></span>
+                Tamper-proof Verification
+              </li>
             </ul>
           </div>
 
           {/* Features */}
           <div>
-            <h4 className="font-semibold text-gray-200 mb-4">Features</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li>• Advanced AI Models</li>
-              <li>• Real-time Processing</li>
-              <li>• Secure Storage</li>
-              <li>• Detailed Reports</li>
-              <li>• API Integration</li>
+            <h4 className="font-orbitron font-bold text-cyber-purple mb-4">FEATURES</h4>
+            <ul className="space-y-3 text-sm text-[hsl(var(--text-secondary))]">
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-purple rounded-full"></span>
+                Advanced AI Models
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-purple rounded-full"></span>
+                Real-time Processing
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-purple rounded-full"></span>
+                Secure Storage
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-purple rounded-full"></span>
+                Detailed Reports
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1 h-1 bg-cyber-purple rounded-full"></span>
+                API Integration
+              </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-700 mt-8 pt-6">
+        <div className="border-t border-[hsl(var(--border-glow))] mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-4 text-sm text-gray-400">
-              <span>© 2025 Deepfake Detector. All rights reserved.</span>
+            <div className="flex items-center space-x-4 text-sm text-[hsl(var(--text-secondary))]">
+              <span>© 2025 Veritas AI. All rights reserved.</span>
               <span className="hidden md:inline">•</span>
               <span>Built with cutting-edge AI technology</span>
             </div>
             
-            <div className="flex items-center space-x-6 mt-4 md:mt-0">
+            <div className="flex items-center space-x-4 mt-4 md:mt-0">
               <div className="flex items-center space-x-2 text-sm">
-                <span className="bg-green-600 text-white px-2 py-1 rounded-full font-medium">
-                  ✓ Secure
+                <span className="glass-card px-3 py-1 text-cyber-green text-xs font-space border border-cyber-green/30">
+                  ✓ SECURE
                 </span>
-                <span className="bg-blue-600 text-white px-2 py-1 rounded-full font-medium">
-                  🤖 AI-Powered
+                <span className="glass-card px-3 py-1 text-cyber-cyan text-xs font-space border border-cyber-cyan/30">
+                  🤖 AI-POWERED
                 </span>
-                <span className="bg-purple-600 text-white px-2 py-1 rounded-full font-medium">
-                  ⚡ Fast
+                <span className="glass-card px-3 py-1 text-cyber-purple text-xs font-space border border-cyber-purple/30">
+                  ⚡ FAST
                 </span>
               </div>
             </div>
           </div>
           
           {/* Tech Section */}
-          <div className="text-center mt-6 py-4 bg-gray-800 rounded-lg">
-            <p className="text-lg font-bold text-gray-200">
-              🔍 Truth Through Technology
+          <div className="text-center mt-8 py-6 glass-card cyber-border">
+            <div className="flex items-center justify-center gap-4 mb-3">
+              <Shield className="w-6 h-6 text-cyber-cyan" />
+              <Zap className="w-6 h-6 text-cyber-purple" />
+              <Database className="w-6 h-6 text-cyber-green" />
+              <TrendingUp className="w-6 h-6 text-cyber-cyan" />
+            </div>
+            <p className="font-orbitron text-lg font-bold gradient-text-cyber">
+              🔍 TRUTH THROUGH TECHNOLOGY
             </p>
-            <p className="text-sm text-gray-400 mt-1">
-              Advanced AI • Secure Processing • Accurate Results
+            <p className="text-[hsl(var(--text-secondary))] text-sm mt-2 font-space">
+              ADVANCED AI • SECURE PROCESSING • ACCURATE RESULTS
             </p>
           </div>
         </div>

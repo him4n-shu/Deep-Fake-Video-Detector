@@ -1,4 +1,6 @@
-# 🎭 Indian Election Deepfake Detection System
+# 🎭 Veritas AI - Deepfake Detection System
+
+**Seeing Through the Illusion**
 
 [![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-green.svg)](https://fastapi.tiangolo.com/)
@@ -6,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deployment](https://img.shields.io/badge/Deployment-Railway-purple.svg)](https://railway.app/)
 
-An advanced AI-powered deepfake video detection system specifically designed for Indian election content. This system uses an ensemble of EfficientNet-B7 models to detect manipulated videos with high accuracy and provides blockchain-based verification for authenticity.
+Veritas AI is an advanced AI-powered deepfake video detection system designed for content verification. Using an ensemble of EfficientNet-B7 models, it detects manipulated videos with high accuracy and provides blockchain-based verification for authenticity.
 
 ## 📋 Table of Contents
 
@@ -29,7 +31,7 @@ An advanced AI-powered deepfake video detection system specifically designed for
 
 ## 🎯 Overview
 
-The Indian Election Deepfake Detection System is a full-stack web application that leverages state-of-the-art deep learning models to identify manipulated videos in the context of Indian elections. With the rise of AI-generated content, this tool helps ensure the authenticity of political media and combat misinformation.
+Veritas AI is a full-stack web application that leverages state-of-the-art deep learning models to identify manipulated videos in digital content. With the rise of AI-generated content, this tool helps ensure the authenticity of media and combat misinformation through advanced AI detection.
 
 ### Key Capabilities
 
@@ -486,7 +488,7 @@ GET /
 **Response:**
 ```json
 {
-  "status": "Indian Election Deepfake Detection System is running",
+  "status": "Veritas AI Deepfake Detection System is running",
   "version": "1.0.0",
   "timestamp": "2025-10-07T08:00:00Z"
 }
@@ -533,7 +535,7 @@ GET /verification-history?skip=0&limit=10
   "records": [
     {
       "id": 1,
-      "video_filename": "election_speech.mp4",
+      "video_filename": "sample_video.mp4",
       "is_deepfake": false,
       "confidence_score": 0.95,
       "blockchain_hash": "a1b2c3d4...",
@@ -571,7 +573,7 @@ GET /verify-hash/{hash}
 {
   "valid": true,
   "record": {
-    "video_filename": "election_speech.mp4",
+    "video_filename": "sample_video.mp4",
     "is_deepfake": false,
     "confidence_score": 0.95,
     "created_at": "2025-10-07T08:00:00Z"
@@ -670,7 +672,7 @@ fetch('https://deepfake-backend-production-de93.up.railway.app/analyze-video', {
 - **Dataset**: Combination of:
   - Deepfake Detection Challenge (DFDC)
   - FaceForensics++
-  - Custom Indian political content dataset
+  - Custom content verification dataset
   
 - **Augmentation**: 
   - Random rotation
@@ -800,7 +802,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Inspiration
 
-This project was inspired by the need to combat misinformation in political discourse, particularly in the context of Indian elections.
+This project was inspired by the need to combat misinformation and deepfake content across various domains, providing reliable content verification for users worldwide.
 
 ## 📞 Contact & Support
 
