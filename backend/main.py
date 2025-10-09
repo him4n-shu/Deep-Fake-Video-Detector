@@ -17,6 +17,7 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
 from database import get_db, create_tables, VerificationRecord, User
+from migrate_database import migrate_database
 from models import VerificationRecordCreate
 from services import DeepfakeDetectionService, BlockchainService
 from schemas import VideoAnalysisRequest, VideoAnalysisResponse, VerificationResponse, UserCreate, UserResponse
@@ -48,6 +49,8 @@ blockchain_service = BlockchainService()
 async def startup_event():
     """Initialize database and services on startup"""
     create_tables()
+    # Run database migration to add missing columns
+    migrate_database()
     print("🚀 Veritas AI - Deepfake Detection System started!")
     print("🎯 Seeing Through the Illusion")
     print("📊 Database initialized")
