@@ -30,22 +30,27 @@ def migrate_database(database_url=None):
     try:
         # Use provided database URL or default to the one from database module
         db_url = database_url or DATABASE_URL
+        logger.info(f"🔍 Starting migration with database URL: {db_url}")
         # Create engine
         engine = create_engine(db_url)
         
         with engine.connect() as conn:
             # Check if verification_records table exists
             inspector = inspect(engine)
-            if 'verification_records' not in inspector.get_table_names():
+            table_names = inspector.get_table_names()
+            logger.info(f"📋 Found tables: {table_names}")
+            
+            if 'verification_records' not in table_names:
                 logger.info("verification_records table doesn't exist. Skipping migration.")
                 return
             
             # Check if user_id column already exists
+            logger.info("🔍 Checking if user_id column exists...")
             if check_column_exists(engine, 'verification_records', 'user_id'):
                 logger.info("user_id column already exists in verification_records table. No migration needed.")
                 return
             
-            logger.info("Adding user_id column to verification_records table...")
+            logger.info("➕ Adding user_id column to verification_records table...")
             
             # Add the user_id column
             if is_postgres:
@@ -54,13 +59,16 @@ def migrate_database(database_url=None):
                 ALTER TABLE verification_records 
                 ADD COLUMN user_id INTEGER;
                 """
+                logger.info("🐘 Using PostgreSQL syntax")
             else:
                 # SQLite syntax
                 alter_sql = """
                 ALTER TABLE verification_records 
                 ADD COLUMN user_id INTEGER;
                 """
+                logger.info("🗃️ Using SQLite syntax")
             
+            logger.info(f"🔧 Executing SQL: {alter_sql.strip()}")
             conn.execute(text(alter_sql))
             conn.commit()
             

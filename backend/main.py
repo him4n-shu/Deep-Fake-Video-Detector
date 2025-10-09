@@ -18,6 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
 from database import get_db, create_tables, VerificationRecord, User
 from migrate_database import migrate_database
+from sqlalchemy import text, func, case
 from models import VerificationRecordCreate
 from services import DeepfakeDetectionService, BlockchainService
 from schemas import VideoAnalysisRequest, VideoAnalysisResponse, VerificationResponse, UserCreate, UserResponse
@@ -45,12 +46,147 @@ app.add_middleware(
 deepfake_service = DeepfakeDetectionService()
 blockchain_service = BlockchainService()
 
+def check_user_id_column_exists(db: Session) -> bool:
+    """Check if user_id column exists in verification_records table"""
+    try:
+        # Try to query the user_id column
+        result = db.execute(text("SELECT user_id FROM verification_records LIMIT 1"))
+        return True
+    except Exception:
+        return False
+
+def get_verification_records_safe(db: Session, limit: int = 50, offset: int = 0, 
+                                 constituency: Optional[str] = None, 
+                                 candidate_name: Optional[str] = None):
+    """Get verification records with fallback for missing user_id column"""
+    try:
+        # Try normal ORM query first
+        query = db.query(VerificationRecord)
+        
+        if constituency:
+            query = query.filter(VerificationRecord.constituency == constituency)
+        if candidate_name:
+            query = query.filter(VerificationRecord.candidate_name == candidate_name)
+        
+        return query.order_by(VerificationRecord.created_at.desc()).offset(offset).limit(limit).all()
+    except Exception as e:
+        print(f"⚠️ ORM query failed, trying raw SQL: {e}")
+        # Fallback to raw SQL without user_id column
+        sql = """
+        SELECT id, analysis_id, filename, file_hash, verification_hash, 
+               is_deepfake, confidence_score, election_context, candidate_name, 
+               constituency, analysis_details, created_at, updated_at
+        FROM verification_records
+        """
+        params = {}
+        conditions = []
+        
+        if constituency:
+            conditions.append("constituency = :constituency")
+            params['constituency'] = constituency
+        if candidate_name:
+            conditions.append("candidate_name = :candidate_name")
+            params['candidate_name'] = candidate_name
+            
+        if conditions:
+            sql += " WHERE " + " AND ".join(conditions)
+            
+        sql += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+        params['limit'] = limit
+        params['offset'] = offset
+        
+        result = db.execute(text(sql), params)
+        
+        # Convert to VerificationRecord objects
+        records = []
+        for row in result:
+            record = VerificationRecord()
+            record.id = row[0]
+            record.analysis_id = row[1]
+            record.filename = row[2]
+            record.file_hash = row[3]
+            record.verification_hash = row[4]
+            record.is_deepfake = row[5]
+            record.confidence_score = row[6]
+            record.election_context = row[7]
+            record.candidate_name = row[8]
+            record.constituency = row[9]
+            record.analysis_details = row[10]
+            record.created_at = row[11]
+            record.updated_at = row[12]
+            record.user_id = None  # Set to None since column doesn't exist
+            records.append(record)
+        
+        return records
+
+def get_verification_count_safe(db: Session):
+    """Get verification count with fallback for missing user_id column"""
+    try:
+        # Try normal ORM query first
+        return db.query(VerificationRecord).count()
+    except Exception as e:
+        print(f"⚠️ ORM count query failed, trying raw SQL: {e}")
+        # Fallback to raw SQL without user_id column
+        result = db.execute(text("SELECT COUNT(*) FROM verification_records"))
+        return result.scalar()
+
+def get_deepfake_count_safe(db: Session):
+    """Get deepfake count with fallback for missing user_id column"""
+    try:
+        # Try normal ORM query first
+        return db.query(VerificationRecord).filter(VerificationRecord.is_deepfake == True).count()
+    except Exception as e:
+        print(f"⚠️ ORM deepfake count query failed, trying raw SQL: {e}")
+        # Fallback to raw SQL without user_id column
+        result = db.execute(text("SELECT COUNT(*) FROM verification_records WHERE is_deepfake = true"))
+        return result.scalar()
+
+def get_constituency_stats_safe(db: Session):
+    """Get constituency statistics with fallback for missing user_id column"""
+    try:
+        # Try normal ORM query first
+        return db.query(
+            VerificationRecord.constituency,
+            func.count(VerificationRecord.id).label('count'),
+            func.sum(case((VerificationRecord.is_deepfake == True, 1), else_=0)).label('deepfake_count')
+        ).group_by(VerificationRecord.constituency).all()
+    except Exception as e:
+        print(f"⚠️ ORM constituency stats query failed, trying raw SQL: {e}")
+        # Fallback to raw SQL without user_id column
+        sql = """
+        SELECT constituency, 
+               COUNT(*) as count,
+               SUM(CASE WHEN is_deepfake = true THEN 1 ELSE 0 END) as deepfake_count
+        FROM verification_records 
+        GROUP BY constituency
+        """
+        result = db.execute(text(sql))
+        
+        # Convert to similar format as ORM result
+        stats = []
+        for row in result:
+            class Stat:
+                def __init__(self, constituency, count, deepfake_count):
+                    self.constituency = constituency
+                    self.count = count
+                    self.deepfake_count = deepfake_count
+            
+            stats.append(Stat(row[0], row[1], row[2]))
+        
+        return stats
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and services on startup"""
     create_tables()
     # Run database migration to add missing columns
-    migrate_database()
+    print("🔄 Running database migration...")
+    try:
+        migrate_database()
+        print("✅ Database migration completed")
+    except Exception as e:
+        print(f"❌ Database migration failed: {e}")
+        # Don't fail startup, but log the error
     print("🚀 Veritas AI - Deepfake Detection System started!")
     print("🎯 Seeing Through the Illusion")
     print("📊 Database initialized")
@@ -268,14 +404,7 @@ async def get_all_verifications(
     """
     Get all verification records with optional filtering
     """
-    query = db.query(VerificationRecord)
-    
-    if constituency:
-        query = query.filter(VerificationRecord.constituency == constituency)
-    if candidate_name:
-        query = query.filter(VerificationRecord.candidate_name == candidate_name)
-    
-    records = query.order_by(VerificationRecord.created_at.desc()).offset(offset).limit(limit).all()
+    records = get_verification_records_safe(db, limit, offset, constituency, candidate_name)
     
     return [
         VerificationResponse(
@@ -299,18 +428,12 @@ async def get_statistics(db: Session = Depends(get_db)):
     """
     Get system statistics
     """
-    total_verifications = db.query(VerificationRecord).count()
-    deepfake_count = db.query(VerificationRecord).filter(
-        VerificationRecord.is_deepfake == True
-    ).count()
+    total_verifications = get_verification_count_safe(db)
+    deepfake_count = get_deepfake_count_safe(db)
     real_count = total_verifications - deepfake_count
     
     # Get constituency statistics
-    constituency_stats = db.query(
-        VerificationRecord.constituency,
-        func.count(VerificationRecord.id).label('count'),
-        func.sum(case((VerificationRecord.is_deepfake == True, 1), else_=0)).label('deepfake_count')
-    ).group_by(VerificationRecord.constituency).all()
+    constituency_stats = get_constituency_stats_safe(db)
     
     return {
         "total_verifications": total_verifications,
