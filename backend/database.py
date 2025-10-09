@@ -38,6 +38,19 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create Base class
 Base = declarative_base()
 
+class User(Base):
+    """Database model for storing user information"""
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    phone = Column(String, nullable=True)
+    organization = Column(String, nullable=True)
+    purpose = Column(String, nullable=True, default='general')
+    created_at = Column(DateTime, default=lambda: datetime.now(pytz.timezone('Asia/Kolkata')))
+    updated_at = Column(DateTime, default=lambda: datetime.now(pytz.timezone('Asia/Kolkata')), onupdate=lambda: datetime.now(pytz.timezone('Asia/Kolkata')))
+
 class VerificationRecord(Base):
     """Database model for storing verification records"""
     __tablename__ = "verification_records"
@@ -53,6 +66,7 @@ class VerificationRecord(Base):
     candidate_name = Column(String, nullable=True)
     constituency = Column(String, nullable=True)
     analysis_details = Column(JSON, nullable=True)  # Store detailed analysis results
+    user_id = Column(Integer, nullable=True)  # Foreign key to users table
     created_at = Column(DateTime, default=lambda: datetime.now(pytz.timezone('Asia/Kolkata')))
     updated_at = Column(DateTime, default=lambda: datetime.now(pytz.timezone('Asia/Kolkata')), onupdate=lambda: datetime.now(pytz.timezone('Asia/Kolkata')))
 

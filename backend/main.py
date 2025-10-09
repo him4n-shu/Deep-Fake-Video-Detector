@@ -16,10 +16,10 @@ import json
 # Add model directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
 
-from database import get_db, create_tables, VerificationRecord
+from database import get_db, create_tables, VerificationRecord, User
 from models import VerificationRecordCreate
 from services import DeepfakeDetectionService, BlockchainService
-from schemas import VideoAnalysisRequest, VideoAnalysisResponse, VerificationResponse
+from schemas import VideoAnalysisRequest, VideoAnalysisResponse, VerificationResponse, UserCreate, UserResponse
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -81,9 +81,59 @@ async def health_check():
         }
     }
 
+@app.post("/users", response_model=UserResponse)
+async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new user or get existing user by email
+    """
+    try:
+        # Check if user already exists
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        
+        if existing_user:
+            # Update existing user information
+            existing_user.name = user_data.name
+            existing_user.phone = user_data.phone
+            existing_user.organization = user_data.organization
+            existing_user.purpose = user_data.purpose
+            existing_user.updated_at = datetime.now(pytz.timezone('Asia/Kolkata'))
+            
+            db.commit()
+            db.refresh(existing_user)
+            return existing_user
+        else:
+            # Create new user
+            new_user = User(
+                name=user_data.name,
+                email=user_data.email,
+                phone=user_data.phone,
+                organization=user_data.organization,
+                purpose=user_data.purpose
+            )
+            
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
+            return new_user
+            
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+@app.get("/users/{email}", response_model=UserResponse)
+async def get_user_by_email(email: str, db: Session = Depends(get_db)):
+    """
+    Get user by email address
+    """
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 @app.post("/analyze-video", response_model=VideoAnalysisResponse)
 async def analyze_video(
     file: UploadFile = File(...),
+    user_id: Optional[int] = None,
     election_context: Optional[str] = None,
     candidate_name: Optional[str] = None,
     constituency: Optional[str] = None,
@@ -144,6 +194,8 @@ async def analyze_video(
         )
         
         db_record = VerificationRecord(**verification_record.dict())
+        if user_id:
+            db_record.user_id = user_id
         db.add(db_record)
         db.commit()
         db.refresh(db_record)

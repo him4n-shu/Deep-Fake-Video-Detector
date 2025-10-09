@@ -22,6 +22,13 @@
     --accent-purple: 262 83% 58%;    /* #7c3aed */
     --accent-purple-dark: 262 83% 38%; /* #5b21b6 */
     
+    /* Cyber Color System */
+    --cyber-cyan: 191 100% 50%;      /* #00d4ff */
+    --cyber-cyan-light: 188 100% 53%; /* #00ffff */
+    --cyber-purple: 262 83% 58%;     /* #7c3aed */
+    --cyber-green: 158 64% 52%;      /* #10b981 */
+    --cyber-red: 0 84% 60%;          /* #ef4444 */
+    
     /* Status Colors */
     --success-green: 158 64% 52%;    /* #10b981 */
     --success-bright: 158 100% 50%;  /* #00ff88 */

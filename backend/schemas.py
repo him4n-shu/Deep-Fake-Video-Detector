@@ -1,6 +1,27 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+
+class UserCreate(BaseModel):
+    """Schema for creating a new user"""
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    organization: Optional[str] = None
+    purpose: Optional[str] = 'general'
+
+class UserResponse(BaseModel):
+    """Schema for user response"""
+    id: int
+    name: str
+    email: str
+    phone: Optional[str] = None
+    organization: Optional[str] = None
+    purpose: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class VideoAnalysisRequest(BaseModel):
     """Request schema for video analysis"""

@@ -31,7 +31,9 @@ export const API_ENDPOINTS = {
   VERIFICATION: (id) => `/verification/${id}`,
   VERIFICATIONS: '/verifications',
   STATISTICS: '/statistics',
-  HEALTH: '/health'
+  HEALTH: '/health',
+  USERS: '/users',
+  USER_BY_EMAIL: (email) => `/users/${email}`
 };
 
 export default {

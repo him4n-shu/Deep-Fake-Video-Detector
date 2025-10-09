@@ -1,16 +1,33 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, CheckCircle, FileVideo, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, X, CheckCircle, FileVideo, Loader2, AlertCircle, User } from 'lucide-react';
 import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 import { toast } from 'sonner';
 import AnimatedBackground from './AnimatedBackground';
+import UserInfoForm from './UserInfoForm';
+import { saveUserInfo, loadUserInfo, clearUserInfo } from '../utils/userStorage';
 
 const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [userInfo, setUserInfo] = useState(() => {
+    // Load user info from localStorage on component mount
+    return loadUserInfo();
+  });
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Ensure user info is loaded on component mount
+  useEffect(() => {
+    if (!userInfo) {
+      const loadedUserInfo = loadUserInfo();
+      if (loadedUserInfo) {
+        setUserInfo(loadedUserInfo);
+      }
+    }
+  }, [userInfo]);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -49,11 +66,45 @@ const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
     }
   };
 
+  const handleUserInfoSubmit = async (userData) => {
+    try {
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.USERS), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const user = await response.json();
+      setUserInfo(user);
+      
+      // Save user info to localStorage for persistence
+      saveUserInfo(user);
+      
+      setShowUserForm(false);
+      return user;
+    } catch (error) {
+      console.error('Error saving user info:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!file) {
       toast.error('Please select a video file');
+      return;
+    }
+
+    // If no user info, show the form first
+    if (!userInfo) {
+      setShowUserForm(true);
       return;
     }
 
@@ -63,6 +114,7 @@ const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('user_id', userInfo.id);
 
       const response = await fetch(buildApiUrl(API_ENDPOINTS.ANALYZE_VIDEO), {
         method: 'POST',
@@ -106,6 +158,14 @@ const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
     <div className="min-h-screen pt-32 pb-12 px-4 relative">
       <AnimatedBackground />
       
+      {/* User Info Form Modal */}
+      {showUserForm && (
+        <UserInfoForm
+          onUserInfoSubmit={handleUserInfoSubmit}
+          onClose={() => setShowUserForm(false)}
+        />
+      )}
+      
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12 animate-slide-up">
@@ -115,6 +175,30 @@ const VideoUpload = ({ onAnalysisComplete, onViewChange }) => {
           <p className="text-[hsl(var(--text-secondary))] text-lg">
             Upload your video for instant deepfake detection
           </p>
+          
+          {/* User Info Display */}
+          {userInfo && (
+            <div className="mt-6 inline-flex items-center gap-3 px-4 py-2 glass-card rounded-lg">
+              <div className="w-8 h-8 bg-cyber-cyan/20 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-cyber-cyan" />
+              </div>
+              <div className="text-left">
+                <p className="text-white text-sm font-medium">{userInfo.name}</p>
+                <p className="text-[hsl(var(--text-muted))] text-xs">{userInfo.email}</p>
+              </div>
+              <button
+                onClick={() => {
+                  clearUserInfo();
+                  setUserInfo(null);
+                  setShowUserForm(true);
+                }}
+                className="text-[hsl(var(--text-muted))] hover:text-cyber-cyan text-xs transition-colors"
+                title="Update user information"
+              >
+                Update
+              </button>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
