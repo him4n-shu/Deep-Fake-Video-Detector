@@ -4,9 +4,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-green.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19.1.1-blue.svg)](https://reactjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Deployment](https://img.shields.io/badge/Deployment-Railway-purple.svg)](https://railway.app/)
+[![Deployment](https://img.shields.io/badge/Deployment-Railway%20%7C%20Vercel-purple.svg)](https://railway.app/)
 
 Veritas AI is an advanced AI-powered deepfake video detection system designed for content verification. Using an ensemble of EfficientNet-B7 models, it detects manipulated videos with high accuracy and provides blockchain-based verification for authenticity.
 
@@ -41,6 +41,7 @@ Veritas AI is a full-stack web application that leverages state-of-the-art deep 
 - **Comprehensive Analysis**: Provides detailed confidence scores and frame-by-frame analysis
 - **User-friendly Interface**: Modern, responsive React frontend with beautiful UI/UX
 - **Complete Audit Trail**: Maintains detailed history of all verification requests
+- **User Management**: Complete user registration and profile management system
 
 ## ✨ Features
 
@@ -119,25 +120,26 @@ Veritas AI is a full-stack web application that leverages state-of-the-art deep 
 ## 🛠️ Technology Stack
 
 ### Frontend
-- **Framework**: React 18.2.0
-- **Build Tool**: Vite 5.0.0
-- **Routing**: React Router DOM 6.20.0
-- **HTTP Client**: Axios
-- **Styling**: Custom CSS with modern design patterns
-- **Icons**: Lucide React
+- **Framework**: React 19.1.1
+- **Build Tool**: Vite 7.1.6
+- **Routing**: React Router DOM 6.8.1
+- **Styling**: Tailwind CSS 3.4.17
+- **Icons**: Lucide React 0.462.0
+- **Notifications**: Sonner 1.7.4
+- **Email Service**: EmailJS 4.4.1
 - **Deployment**: Vercel
 
 ### Backend
 - **Framework**: FastAPI 0.104.1
 - **Web Server**: Uvicorn with Gunicorn workers
-- **Database**: PostgreSQL (Railway)
+- **Database**: PostgreSQL (Railway) / SQLite (Development)
 - **ORM**: SQLAlchemy 2.0.23
-- **Validation**: Pydantic
+- **Validation**: Pydantic 2.5.0
 - **CORS**: FastAPI CORS Middleware
 - **Deployment**: Railway.app
 
 ### AI/ML Stack
-- **Deep Learning Framework**: PyTorch 2.1.1
+- **Deep Learning Framework**: PyTorch 2.0.1
 - **Pre-trained Models**: EfficientNet-B7 (timm library)
 - **Face Detection**: MTCNN (facenet-pytorch)
 - **Image Processing**: OpenCV, PIL
@@ -154,7 +156,7 @@ Veritas AI is a full-stack web application that leverages state-of-the-art deep 
 ## 📁 Project Structure
 
 ```
-deepfake_video_detector_dev/
+deepfake_video_dector_dev/
 │
 ├── frontend/                      # React frontend application
 │   ├── src/
@@ -165,18 +167,41 @@ deepfake_video_detector_dev/
 │   │   │   ├── VerificationHistory.jsx
 │   │   │   ├── Statistics.jsx
 │   │   │   ├── Header.jsx
-│   │   │   └── Footer.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── UserInfoForm.jsx
+│   │   │   ├── ContactDeveloper.jsx
+│   │   │   ├── PrivacyPolicy.jsx
+│   │   │   ├── TermsOfService.jsx
+│   │   │   ├── AnimatedBackground.jsx
+│   │   │   └── ui/
+│   │   │       └── button.jsx
 │   │   ├── config/
 │   │   │   └── api.js            # API configuration
+│   │   ├── lib/
+│   │   │   └── utils.js          # Utility functions
+│   │   ├── utils/
+│   │   │   └── userStorage.js    # User storage utilities
 │   │   ├── App.jsx               # Main app component
 │   │   ├── main.jsx              # Entry point
-│   │   ├── index.css             # Global styles
-│   │   └── theme.css             # Theme styles
+│   │   └── index.css             # Global styles
 │   ├── public/                   # Static assets
+│   │   ├── favicon.ico
+│   │   ├── favicon-16x16.png
+│   │   ├── favicon-32x32.png
+│   │   ├── apple-touch-icon.png
+│   │   ├── android-chrome-192x192.png
+│   │   ├── android-chrome-512x512.png
+│   │   ├── site.webmanifest
+│   │   ├── _headers
+│   │   └── _redirects
+│   ├── dist/                     # Build output
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
-│   └── .env.production           # Production environment variables
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── eslint.config.js
+│   └── vercel.json
 │
 ├── backend/                       # FastAPI backend application
 │   ├── main.py                   # Main API application
@@ -184,21 +209,19 @@ deepfake_video_detector_dev/
 │   ├── models.py                 # Pydantic models
 │   ├── schemas.py                # API schemas
 │   ├── services.py               # Business logic services
+│   ├── model_loader.py           # AI model loader (local)
 │   ├── model_loader_s3.py        # AI model loader with S3
+│   ├── migrate_database.py       # Database migration script
 │   ├── requirements.txt          # Python dependencies
-│   ├── .env.production           # Production environment variables
+│   ├── veritas_ai.db            # SQLite database (development)
 │   └── temp_uploads/             # Temporary upload storage
 │
 ├── model/                         # AI/ML model files
 │   ├── training/
 │   │   └── zoo/
 │   │       └── classifiers.py    # Model architecture
-│   ├── configs/
-│   │   ├── b7.json              # EfficientNet-B7 config
-│   │   └── b5.json              # EfficientNet-B5 config
-│   ├── kernel_utils.py          # Video processing utilities
-│   ├── predict_folder.py        # Batch prediction script
-│   └── weights/                 # Model weights (from S3)
+│   ├── requirements.txt          # Model dependencies
+│   └── weights/                  # Model weights (7 EfficientNet-B7 models)
 │       ├── final_111_DeepFakeClassifier_tf_efficientnet_b7_ns_0_36
 │       ├── final_555_DeepFakeClassifier_tf_efficientnet_b7_ns_0_19
 │       ├── final_777_DeepFakeClassifier_tf_efficientnet_b7_ns_0_29
@@ -220,7 +243,7 @@ deepfake_video_detector_dev/
 - **Python**: 3.10 or higher
 - **Node.js**: 16.x or higher
 - **npm**: 8.x or higher
-- **PostgreSQL**: 14.x or higher
+- **PostgreSQL**: 14.x or higher (for production)
 - **AWS Account**: For S3 storage
 - **Git**: For version control
 
@@ -228,8 +251,8 @@ deepfake_video_detector_dev/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/him4n-shu/Deep-Fake-Video-Detector.git
-   cd Deep-Fake-Video-Detector
+   git clone https://github.com/him4n-shu/deepfake_video_dector_dev.git
+   cd deepfake_video_dector_dev
    ```
 
 2. **Create a Python virtual environment**
@@ -268,7 +291,7 @@ deepfake_video_detector_dev/
    S3_BUCKET_NAME=deepfake-detector-models
    
    # CORS Settings
-   ALLOWED_ORIGINS=http://localhost:5173
+   ALLOWED_ORIGINS=http://localhost:5173,https://cyber-veritasai.vercel.app
    ```
 
 6. **Initialize the database**
@@ -338,7 +361,7 @@ deepfake_video_detector_dev/
 
 ### Backend Configuration
 
-**Environment Variables** (`backend/.env.production`):
+**Environment Variables** (`backend/.env`):
 
 ```env
 # Application Settings
@@ -351,7 +374,7 @@ MODEL_WEIGHTS_DIR=./model/weights
 CUDA_AVAILABLE=False
 
 # CORS Settings
-ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
+ALLOWED_ORIGINS=https://cyber-veritasai.vercel.app
 
 # Database Configuration
 DATABASE_URL=postgresql://user:password@host:port/database
@@ -365,23 +388,10 @@ S3_BUCKET_NAME=deepfake-detector-models
 
 ### Frontend Configuration
 
-**Environment Variables** (`frontend/.env.production`):
+**Environment Variables** (`frontend/.env`):
 
 ```env
-VITE_API_BASE_URL=https://your-backend-domain.railway.app
-```
-
-### Model Configuration
-
-**EfficientNet-B7 Settings** (`model/configs/b7.json`):
-
-```json
-{
-  "encoder": "tf_efficientnet_b7_ns",
-  "input_size": 380,
-  "batch_size": 4,
-  "num_classes": 1
-}
+VITE_API_BASE_URL=https://deepfake-backend-production-de93.up.railway.app
 ```
 
 ## 🌐 Deployment
@@ -408,7 +418,7 @@ VITE_API_BASE_URL=https://your-backend-domain.railway.app
    AWS_SECRET_ACCESS_KEY=your-aws-secret-key
    AWS_DEFAULT_REGION=us-east-1
    S3_BUCKET_NAME=deepfake-detector-models
-   ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
+   ALLOWED_ORIGINS=https://cyber-veritasai.vercel.app
    ```
 
 4. **Add PostgreSQL database**
@@ -442,7 +452,7 @@ VITE_API_BASE_URL=https://your-backend-domain.railway.app
 
 4. **Add environment variables**
    ```
-   VITE_API_BASE_URL=https://your-backend-domain.railway.app
+   VITE_API_BASE_URL=https://deepfake-backend-production-de93.up.railway.app
    ```
 
 5. **Deploy**
@@ -482,7 +492,7 @@ Development: http://localhost:8000
 
 #### 1. Health Check
 ```http
-GET /
+GET /health
 ```
 
 **Response:**
@@ -490,7 +500,7 @@ GET /
 {
   "status": "Veritas AI Deepfake Detection System is running",
   "version": "1.0.0",
-  "timestamp": "2025-10-07T08:00:00Z"
+  "timestamp": "2025-10-09T19:12:10Z"
 }
 ```
 
@@ -503,14 +513,19 @@ Content-Type: multipart/form-data
 **Request:**
 ```
 file: <video_file>
+election_context: <optional>
+candidate_name: <optional>
+constituency: <optional>
 ```
 
 **Response:**
 ```json
 {
-  "prediction": "AUTHENTIC",
-  "confidence": 0.95,
-  "blockchain_hash": "a1b2c3d4e5f6...",
+  "analysis_id": "uuid-string",
+  "filename": "video.mp4",
+  "is_deepfake": false,
+  "confidence_score": 0.95,
+  "verification_hash": "a1b2c3d4e5f6...",
   "analysis_details": {
     "total_frames": 150,
     "analyzed_frames": 30,
@@ -518,14 +533,13 @@ file: <video_file>
     "model_predictions": [0.94, 0.96, 0.93, ...],
     "average_confidence": 0.95
   },
-  "timestamp": "2025-10-07T08:00:00Z",
-  "processing_time": 45.2
+  "timestamp": "2025-10-09T19:12:10Z"
 }
 ```
 
 #### 3. Get Verification History
 ```http
-GET /verification-history?skip=0&limit=10
+GET /verifications?limit=50&offset=0&constituency=<optional>&candidate_name=<optional>
 ```
 
 **Response:**
@@ -534,14 +548,16 @@ GET /verification-history?skip=0&limit=10
   "total": 100,
   "records": [
     {
-      "id": 1,
-      "video_filename": "sample_video.mp4",
+      "analysis_id": "uuid-string",
+      "filename": "sample_video.mp4",
       "is_deepfake": false,
       "confidence_score": 0.95,
-      "blockchain_hash": "a1b2c3d4...",
-      "created_at": "2025-10-07T08:00:00Z"
-    },
-    ...
+      "verification_hash": "a1b2c3d4...",
+      "election_context": "General Election 2024",
+      "candidate_name": "John Doe",
+      "constituency": "Mumbai North",
+      "created_at": "2025-10-09T19:12:10Z"
+    }
   ]
 }
 ```
@@ -555,29 +571,34 @@ GET /statistics
 ```json
 {
   "total_verifications": 1000,
-  "deepfakes_detected": 150,
-  "authentic_videos": 850,
-  "average_confidence": 0.92,
-  "detection_rate": 0.15,
-  "recent_activity": [...]
+  "deepfake_detected": 150,
+  "real_videos": 850,
+  "deepfake_percentage": 15.0,
+  "constituency_breakdown": [
+    {
+      "constituency": "Mumbai North",
+      "total": 50,
+      "deepfakes": 8,
+      "percentage": 16.0
+    }
+  ]
 }
 ```
 
-#### 5. Verify Blockchain Hash
+#### 5. User Management
 ```http
-GET /verify-hash/{hash}
+POST /users
+GET /users/{email}
 ```
 
-**Response:**
+**User Creation Request:**
 ```json
 {
-  "valid": true,
-  "record": {
-    "video_filename": "sample_video.mp4",
-    "is_deepfake": false,
-    "confidence_score": 0.95,
-    "created_at": "2025-10-07T08:00:00Z"
-  }
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+1234567890",
+  "organization": "Media House",
+  "purpose": "journalism"
 }
 ```
 
@@ -630,12 +651,18 @@ import requests
 # Analyze video
 url = "https://deepfake-backend-production-de93.up.railway.app/analyze-video"
 files = {"file": open("video.mp4", "rb")}
-response = requests.post(url, files=files)
+data = {
+    "election_context": "General Election 2024",
+    "candidate_name": "John Doe",
+    "constituency": "Mumbai North"
+}
+response = requests.post(url, files=files, data=data)
 result = response.json()
 
-print(f"Prediction: {result['prediction']}")
-print(f"Confidence: {result['confidence']}")
-print(f"Blockchain Hash: {result['blockchain_hash']}")
+print(f"Analysis ID: {result['analysis_id']}")
+print(f"Is Deepfake: {result['is_deepfake']}")
+print(f"Confidence: {result['confidence_score']}")
+print(f"Verification Hash: {result['verification_hash']}")
 ```
 
 **JavaScript Example:**
@@ -643,6 +670,9 @@ print(f"Blockchain Hash: {result['blockchain_hash']}")
 ```javascript
 const formData = new FormData();
 formData.append('file', videoFile);
+formData.append('election_context', 'General Election 2024');
+formData.append('candidate_name', 'John Doe');
+formData.append('constituency', 'Mumbai North');
 
 fetch('https://deepfake-backend-production-de93.up.railway.app/analyze-video', {
   method: 'POST',
@@ -650,9 +680,10 @@ fetch('https://deepfake-backend-production-de93.up.railway.app/analyze-video', {
 })
 .then(response => response.json())
 .then(data => {
-  console.log('Prediction:', data.prediction);
-  console.log('Confidence:', data.confidence);
-  console.log('Blockchain Hash:', data.blockchain_hash);
+  console.log('Analysis ID:', data.analysis_id);
+  console.log('Is Deepfake:', data.is_deepfake);
+  console.log('Confidence:', data.confidence_score);
+  console.log('Verification Hash:', data.verification_hash);
 });
 ```
 
@@ -666,6 +697,18 @@ fetch('https://deepfake-backend-production-de93.up.railway.app/analyze-video', {
 - **Number of Models**: 7 independent models
 - **Input Size**: 380x380 pixels
 - **Output**: Binary classification (Authentic/Deepfake)
+
+### Model Files
+
+The system uses 7 pre-trained EfficientNet-B7 models:
+
+1. `final_111_DeepFakeClassifier_tf_efficientnet_b7_ns_0_36`
+2. `final_555_DeepFakeClassifier_tf_efficientnet_b7_ns_0_19`
+3. `final_777_DeepFakeClassifier_tf_efficientnet_b7_ns_0_29`
+4. `final_777_DeepFakeClassifier_tf_efficientnet_b7_ns_0_31`
+5. `final_888_DeepFakeClassifier_tf_efficientnet_b7_ns_0_37`
+6. `final_888_DeepFakeClassifier_tf_efficientnet_b7_ns_0_40`
+7. `final_999_DeepFakeClassifier_tf_efficientnet_b7_ns_0_23`
 
 ### Training Details
 
@@ -810,15 +853,16 @@ This project was inspired by the need to combat misinformation and deepfake cont
 
 - **Name**: Himanshu
 - **GitHub**: [@him4n-shu](https://github.com/him4n-shu)
+- **Email**: Available through the contact form in the application
 
 ### Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/him4n-shu/Deep-Fake-Video-Detector/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/him4n-shu/Deep-Fake-Video-Detector/discussions)
+- **Issues**: [GitHub Issues](https://github.com/him4n-shu/deepfake_video_dector_dev/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/him4n-shu/deepfake_video_dector_dev/discussions)
 
 ### Live Demo
 
-- **Frontend**: [https://deep-fake-video-detector.vercel.app](https://deep-fake-video-detector.vercel.app)
+- **Frontend**: [https://cyber-veritasai.vercel.app](https://cyber-veritasai.vercel.app)
 - **Backend API**: [https://deepfake-backend-production-de93.up.railway.app](https://deepfake-backend-production-de93.up.railway.app)
 - **API Docs**: [https://deepfake-backend-production-de93.up.railway.app/docs](https://deepfake-backend-production-de93.up.railway.app/docs)
 
@@ -831,6 +875,9 @@ This project was inspired by the need to combat misinformation and deepfake cont
 - ✅ Blockchain verification
 - ✅ Verification history
 - ✅ Statistics dashboard
+- ✅ User management system
+- ✅ Contact developer functionality
+- ✅ Privacy policy and terms of service
 
 ### Upcoming Features (v1.1.0)
 
@@ -853,4 +900,3 @@ This project was inspired by the need to combat misinformation and deepfake cont
 **Built with ❤️ for a trustworthy digital democracy**
 
 *Last Updated: October 2025*
-
