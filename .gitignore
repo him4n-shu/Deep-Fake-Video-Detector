@@ -208,7 +208,11 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public (commented out to allow favicon files)
+# public
+
+# Allow frontend public folder for static assets
+!frontend/public/
 
 # Storybook build outputs
 .out
