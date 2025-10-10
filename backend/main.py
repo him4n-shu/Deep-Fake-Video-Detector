@@ -32,7 +32,7 @@ app = FastAPI(
 
 # CORS middleware for frontend communication
 # Get allowed origins from environment variable for production
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,https://deep-fake-video-detector.vercel.app").split(",")
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,https://deep-fake-video-detector.vercel.app,https://cyber-veritasai.vercel.app").split(",")
 
 app.add_middleware(
     CORSMiddleware,
